@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Visualization</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #1f1f2e, #3a3a5a);
+      color: #660e0e;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #ffffff;
+      color: #000000;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    nav {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+
+    svg {
+      display: block;
+      margin: 20px auto 40px auto;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <button onclick="showSection('viz')">Visualization</button>
+  <button onclick="showSection('docs')">Documentation</button>
+  <button onclick="showSection('video')">Video</button>
+</nav>
+
+<!-- VISUALIZATION -->
+<div id="viz" class="container">
+  <h3>Peter Botros - DV Final Project</h3>
+
+  <h2>Popularity vs Energy</h2>
+  <p>This chart shows how energy relates to song popularity.</p>
+
+  <svg id="scatter" width="700" height="500"></svg>
+
+  <h2>Average Popularity by Energy</h2>
+  <svg id="bar" width="700" height="400"></svg>
+</div>
+
+<!-- DOCUMENTATION -->
+<div id="docs" class="container" style="display:none;">
+  <h2>Documentation</h2>
+
+  <h3>Project Overview</h3>
+  <p>
+    This project explores the relationship between a song’s energy level and its popularity using a Spotify dataset.
+  </p>
+
+  <h3>Design Process</h3>
+  <p>
+    A bar chart was initially considered, but it did not show relationships between variables clearly. The design shifted to a scatterplot to better visualize patterns.
+  </p>
+
+  <h3>Key Findings</h3>
+  <ul>
+    <li>Most songs cluster in medium to high energy</li>
+    <li>Popularity varies widely across all energy levels</li>
+    <li>Energy is not a strong predictor of success</li>
+  </ul>
+
+  <h3>Detailed Explanation</h3>
+  <p>
+    I designed this visualization by first selecting a Spotify dataset because I wanted to explore a simple but meaningful relationship between variables, specifically how a song’s energy relates to its popularity. My initial idea was to use a bar chart, but I quickly realized that it would not effectively show the relationship between two continuous variables. Because of that, I decided to use a scatterplot as my primary visualization, placing popularity on the x-axis and energy on the y-axis. This allowed me to clearly see patterns, clustering, and variation across individual songs.
+  </p>
+  <p>
+    During the design process, I also considered adding more complex interactions like filtering, but I chose to keep the design clean and focused so that the visualization would be easy to understand for any user. To complement the scatterplot, I added a bar chart that groups energy levels and shows the average popularity within each group. This second chart provides a higher-level summary of the data and helps confirm trends that may not be immediately obvious in the scatterplot alone.
+  </p>
+  <p>
+    In terms of design choices, I used a simple color scheme to avoid confusion, with blue representing individual data points and orange representing the aggregated values in the bar chart, while red is used during hover interactions to highlight elements and improve user engagement. The layout was intentionally structured so that the scatterplot appears first, allowing users to examine raw data, followed by the bar chart, which helps them interpret overall trends more easily.
+  </p>
+  <p>
+    Through this visualization, I was able to discover several key insights. Most songs tend to cluster in the medium to high energy range, particularly between 0.6 and 0.9, suggesting that higher energy music is more common. However, the scatterplot also shows that popularity varies widely across all energy levels, indicating that energy alone does not determine a song’s success. The bar chart reinforces this observation by showing that while mid-to-high energy songs tend to have slightly higher average popularity, the difference is not large. This suggests that other factors, beyond energy, play an important role in determining popularity, and the visualization helps communicate both the variability and the overall trend effectively.
+  </p>
+</div>
+
+<!-- VIDEO -->
+<div id="video" class="container" style="display:none;">
+  <h2>Project Video</h2>
+  <iframe width="560" height="315"
+    src="https://www.youtube.com/embed/oNjbUvH2mMo"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+
+<script>
+function showSection(sectionId) {
+  document.getElementById('viz').style.display = 'none';
+  document.getElementById('docs').style.display = 'none';
+  document.getElementById('video').style.display = 'none';
+
+  document.getElementById(sectionId).style.display = 'block';
+}
+
+const width = 700;
+const height = 500;
+const margin = {top: 20, right: 30, bottom: 60, left: 60};
+
+const svg = d3.select("#scatter");
+const barSvg = d3.select("#bar");
+
+const tooltip = d3.select("body")
+  .append("div")
+  .style("position", "absolute")
+  .style("background", "white")
+  .style("padding", "6px")
+  .style("border-radius", "5px")
+  .style("box-shadow", "0 2px 10px rgba(0,0,0,0.2)")
+  .style("display", "none");
+
+d3.csv("data.csv").then(function(data) {
+
+  data.forEach(function(d) {
+    d.Popularity = +d.Popularity;
+    d.Energy = +d.Energy;
+  });
+
+  const x = d3.scaleLinear()
+    .domain([0, d3.max(data, d => d.Popularity)])
+    .range([margin.left, width - margin.right]);
+
+  const y = d3.scaleLinear()
+    .domain([0, 1])
+    .range([height - margin.bottom, margin.top]);
+
+  svg.append("g")
+    .attr("transform", `translate(0, ${height - margin.bottom})`)
+    .call(d3.axisBottom(x));
+
+  svg.append("g")
+    .attr("transform", `translate(${margin.left}, 0)`)
+    .call(d3.axisLeft(y));
+
+  svg.selectAll("circle")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", d => x(d.Popularity))
+    .attr("cy", d => y(d.Energy))
+    .attr("r", 3)
+    .style("fill", "#3b82f6")
+    .on("mouseover", function(event, d) {
+      d3.select(this).style("fill", "#ef4444");
+
+      tooltip.style("display", "block")
+        .html("Popularity: " + d.Popularity + "<br>Energy: " + d.Energy);
+    })
+    .on("mousemove", function(event) {
+      tooltip.style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY + 10) + "px");
+    })
+    .on("mouseout", function() {
+      d3.select(this).style("fill", "#3b82f6");
+      tooltip.style("display", "none");
+    });
+
+  const grouped = d3.rollups(
+    data,
+    v => d3.mean(v, d => d.Popularity),
+    d => Math.round(d.Energy * 10) / 10
+  );
+
+  grouped.sort((a, b) => a[0] - b[0]);
+
+  const xBar = d3.scaleBand()
+    .domain(grouped.map(d => d[0]))
+    .range([margin.left, width - margin.right])
+    .padding(0.1);
+
+  const yBar = d3.scaleLinear()
+    .domain([0, d3.max(grouped, d => d[1])])
+    .range([400 - margin.bottom, margin.top]);
+
+  barSvg.append("g")
+    .attr("transform", `translate(0, ${400 - margin.bottom})`)
+    .call(d3.axisBottom(xBar));
+
+  barSvg.append("g")
+    .attr("transform", `translate(${margin.left}, 0)`)
+    .call(d3.axisLeft(yBar));
+
+  barSvg.selectAll("rect")
+    .data(grouped)
+    .enter()
+    .append("rect")
+    .attr("x", d => xBar(d[0]))
+    .attr("y", d => yBar(d[1]))
+    .attr("width", xBar.bandwidth())
+    .attr("height", d => (400 - margin.bottom) - yBar(d[1]))
+    .attr("fill", "#f59e0b")
+    .on("mouseover", function(event, d) {
+      d3.select(this).attr("fill", "#ef4444");
+
+      tooltip.style("display", "block")
+        .html("Energy: " + d[0] + "<br>Avg Popularity: " + d[1].toFixed(2));
+    })
+    .on("mousemove", function(event) {
+      tooltip.style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY + 10) + "px");
+    })
+    .on("mouseout", function() {
+      d3.select(this).attr("fill", "#f59e0b");
+      tooltip.style("display", "none");
+    });
+
+});
+</script>
+
+</body>
+</html>
